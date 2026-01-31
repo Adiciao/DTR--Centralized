@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { User, UserRequest, RequestCategory, AttendanceLog } from '../types';
-import { getRequests, updateRequest, getUsers, getLogs } from '../services/db';
-import { LogOut, Filter, CheckCircle, XCircle, Clock, AlertCircle, CalendarDays, Briefcase, FileWarning, Bell, X, LayoutDashboard, Users, Activity, MapPin, Search, ShieldAlert } from 'lucide-react';
+import { User, UserRequest, RequestCategory, AttendanceLog, JobTitle } from '../types';
+import { getRequests, updateRequest, getUsers, getLogs, addUser, updateUser, deleteUser } from '../services/db';
+import { LogOut, Filter, CheckCircle, XCircle, Clock, AlertCircle, CalendarDays, Briefcase, FileWarning, Bell, X, LayoutDashboard, Users, Activity, MapPin, Search, ShieldAlert, UserPlus, Edit, Trash2, Save } from 'lucide-react';
 
 interface AdminScreenProps {
   currentUser: User;
@@ -22,6 +22,18 @@ export const AdminScreen: React.FC<AdminScreenProps> = ({ currentUser, onLogout,
   // Requests View State
   const [categoryTab, setCategoryTab] = useState<RequestCategory>('LEAVE');
   const [statusFilter, setStatusFilter] = useState<'PENDING' | 'ALL'>('PENDING');
+
+  // Employee Management State
+  const [showUserModal, setShowUserModal] = useState(false);
+  const [editingUser, setEditingUser] = useState<User | null>(null);
+  
+  // Form State
+  const [formName, setFormName] = useState('');
+  const [formId, setFormId] = useState('');
+  const [formPassword, setFormPassword] = useState('1234');
+  const [formJobTitle, setFormJobTitle] = useState<JobTitle>('Operator');
+  const [formRole, setFormRole] = useState<'EMPLOYEE' | 'ADMIN'>('EMPLOYEE');
+
 
   // Notification & Security State
   const [notification, setNotification] = useState<string | null>(null);
@@ -85,6 +97,63 @@ export const AdminScreen: React.FC<AdminScreenProps> = ({ currentUser, onLogout,
     const updated = { ...req, status: newStatus, isRead: false };
     updateRequest(updated);
     loadData();
+  };
+
+  // --- USER MANAGEMENT HANDLERS ---
+  const openAddUser = () => {
+    setEditingUser(null);
+    setFormName('');
+    setFormId('');
+    setFormPassword('1234');
+    setFormJobTitle('Operator');
+    setFormRole('EMPLOYEE');
+    setShowUserModal(true);
+  };
+
+  const openEditUser = (user: User) => {
+    setEditingUser(user);
+    setFormName(user.name);
+    setFormId(user.id);
+    setFormPassword(user.password || '');
+    setFormJobTitle(user.jobTitle || 'Operator');
+    setFormRole(user.role || 'EMPLOYEE');
+    setShowUserModal(true);
+  };
+
+  const handleDeleteUser = (id: string) => {
+      if (window.confirm("Are you sure you want to delete this user? This cannot be undone.")) {
+          deleteUser(id);
+          loadData();
+      }
+  };
+
+  const handleSaveUser = (e: React.FormEvent) => {
+      e.preventDefault();
+      
+      const userPayload: User = {
+          id: formId,
+          name: formName,
+          password: formPassword,
+          role: formRole,
+          jobTitle: formJobTitle,
+          isDefaultPass: true // Resetting password or creating new always sets this to true for security
+      };
+
+      if (editingUser) {
+          // Update
+          updateUser(userPayload);
+          alert("User updated successfully.");
+      } else {
+          // Create
+          const success = addUser(userPayload);
+          if (!success) {
+              alert("Error: User ID already exists!");
+              return;
+          }
+          alert("User created successfully.");
+      }
+      setShowUserModal(false);
+      loadData();
   };
 
   // --- HELPERS ---
@@ -237,13 +306,22 @@ export const AdminScreen: React.FC<AdminScreenProps> = ({ currentUser, onLogout,
     return (
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden flex flex-col h-full">
             <div className="p-4 border-b border-gray-100 bg-gray-50 flex justify-between items-center">
-                <h3 className="font-bold text-gray-700 flex items-center gap-2 text-sm">
-                    <Users className="w-4 h-4 text-blue-600" /> Employee Directory
-                </h3>
-                <div className="relative">
-                    <input type="text" placeholder="Search..." className="pl-8 pr-3 py-1.5 text-xs border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none w-48" />
-                    <Search className="w-3 h-3 text-gray-400 absolute left-2.5 top-2" />
+                <div className="flex items-center gap-4">
+                    <h3 className="font-bold text-gray-700 flex items-center gap-2 text-sm">
+                        <Users className="w-4 h-4 text-blue-600" /> Employee Directory
+                    </h3>
+                    <div className="relative">
+                        <input type="text" placeholder="Search..." className="pl-8 pr-3 py-1.5 text-xs border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none w-48" />
+                        <Search className="w-3 h-3 text-gray-400 absolute left-2.5 top-2" />
+                    </div>
                 </div>
+                <button 
+                    onClick={openAddUser}
+                    className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg text-xs font-bold transition shadow-sm"
+                >
+                    <UserPlus className="w-4 h-4" />
+                    Add Employee
+                </button>
             </div>
             <div className="flex-1 overflow-y-auto">
                  <table className="w-full text-sm text-left">
@@ -277,7 +355,22 @@ export const AdminScreen: React.FC<AdminScreenProps> = ({ currentUser, onLogout,
                                     </span>
                                 </td>
                                 <td className="px-6 py-4 text-right">
-                                    <button className="text-blue-600 hover:underline text-xs font-semibold">Edit</button>
+                                    <div className="flex justify-end gap-2">
+                                        <button 
+                                            onClick={() => openEditUser(u)}
+                                            className="text-gray-500 hover:text-blue-600 p-1 rounded hover:bg-blue-50 transition" 
+                                            title="Edit User"
+                                        >
+                                            <Edit className="w-4 h-4" />
+                                        </button>
+                                        <button 
+                                            onClick={() => handleDeleteUser(u.id)}
+                                            className="text-gray-500 hover:text-red-600 p-1 rounded hover:bg-red-50 transition" 
+                                            title="Delete User"
+                                        >
+                                            <Trash2 className="w-4 h-4" />
+                                        </button>
+                                    </div>
                                 </td>
                             </tr>
                         ))}
@@ -454,6 +547,94 @@ export const AdminScreen: React.FC<AdminScreenProps> = ({ currentUser, onLogout,
     );
   };
 
+  const renderUserModal = () => {
+      if (!showUserModal) return null;
+      return (
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+              <div className="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden animate-slide-up">
+                  <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50">
+                      <h3 className="font-bold text-gray-800 flex items-center gap-2">
+                          <UserPlus className="w-5 h-5 text-blue-600" />
+                          {editingUser ? 'Edit Employee' : 'Add Employee'}
+                      </h3>
+                      <button onClick={() => setShowUserModal(false)} className="text-gray-400 hover:text-gray-600 transition">
+                          <X className="w-5 h-5" />
+                      </button>
+                  </div>
+                  <form onSubmit={handleSaveUser} className="p-6 space-y-4">
+                      <div>
+                          <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Employee ID</label>
+                          <input 
+                              type="text" 
+                              value={formId} 
+                              onChange={e => setFormId(e.target.value)} 
+                              className={`w-full p-3 rounded-lg border border-gray-300 outline-none transition ${editingUser ? 'bg-gray-100 text-gray-500 cursor-not-allowed' : 'focus:ring-2 focus:ring-blue-500'}`}
+                              placeholder="e.g. 1004"
+                              required 
+                              disabled={!!editingUser}
+                          />
+                      </div>
+                      <div>
+                          <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Full Name</label>
+                          <input 
+                              type="text" 
+                              value={formName} 
+                              onChange={e => setFormName(e.target.value)} 
+                              className="w-full p-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 outline-none"
+                              placeholder="e.g. John Doe"
+                              required 
+                          />
+                      </div>
+                      <div className="grid grid-cols-2 gap-4">
+                          <div>
+                              <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Job Title</label>
+                              <select 
+                                  value={formJobTitle} 
+                                  onChange={e => setFormJobTitle(e.target.value as JobTitle)}
+                                  className="w-full p-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 outline-none bg-white"
+                              >
+                                  <option value="Programmer">Programmer</option>
+                                  <option value="Technician">Technician</option>
+                                  <option value="Operator">Operator</option>
+                                  <option value="Administrator">Administrator</option>
+                              </select>
+                          </div>
+                          <div>
+                              <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Role</label>
+                              <select 
+                                  value={formRole} 
+                                  onChange={e => setFormRole(e.target.value as any)}
+                                  className="w-full p-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 outline-none bg-white"
+                              >
+                                  <option value="EMPLOYEE">Employee</option>
+                                  <option value="ADMIN">Admin</option>
+                              </select>
+                          </div>
+                      </div>
+                      <div>
+                          <label className="block text-xs font-bold text-gray-500 uppercase mb-1">
+                              {editingUser ? 'Reset Password' : 'Initial Password'}
+                          </label>
+                          <input 
+                              type="text" 
+                              value={formPassword} 
+                              onChange={e => setFormPassword(e.target.value)} 
+                              className="w-full p-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 outline-none font-mono"
+                              placeholder="Leave blank to keep current"
+                              required={!editingUser}
+                          />
+                          {editingUser && <p className="text-[10px] text-gray-400 mt-1">Note: Saving will force the user to change password on next login.</p>}
+                      </div>
+                      <button type="submit" className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg shadow-lg flex items-center justify-center gap-2 transition">
+                          <Save className="w-4 h-4" />
+                          {editingUser ? 'Save Changes' : 'Create Account'}
+                      </button>
+                  </form>
+              </div>
+          </div>
+      );
+  };
+
   return (
     <div className="flex flex-col h-full bg-slate-100 relative">
       {/* Toast Notification */}
@@ -538,6 +719,9 @@ export const AdminScreen: React.FC<AdminScreenProps> = ({ currentUser, onLogout,
         {activeTab === 'EMPLOYEES' && renderEmployees()}
         {activeTab === 'REQUESTS' && renderRequests()}
       </div>
+
+      {/* User Management Modal */}
+      {renderUserModal()}
     </div>
   );
 };

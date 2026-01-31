@@ -49,6 +49,16 @@ export const getUsers = (): User[] => {
   return data ? JSON.parse(data) : [];
 };
 
+export const addUser = (user: User): boolean => {
+  const users = getUsers();
+  if (users.find(u => u.id === user.id)) {
+    return false; // ID collision
+  }
+  users.push(user);
+  localStorage.setItem(MOCK_USERS_KEY, JSON.stringify(users));
+  return true;
+};
+
 export const updateUser = (updatedUser: User) => {
   const users = getUsers();
   const index = users.findIndex(u => u.id === updatedUser.id);
@@ -56,6 +66,12 @@ export const updateUser = (updatedUser: User) => {
     users[index] = updatedUser;
     localStorage.setItem(MOCK_USERS_KEY, JSON.stringify(users));
   }
+};
+
+export const deleteUser = (userId: string) => {
+  const users = getUsers();
+  const filtered = users.filter(u => u.id !== userId);
+  localStorage.setItem(MOCK_USERS_KEY, JSON.stringify(filtered));
 };
 
 export const getLogs = (): AttendanceLog[] => {
