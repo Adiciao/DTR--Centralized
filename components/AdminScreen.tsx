@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { User, UserRequest, RequestCategory, AttendanceLog, JobTitle } from '../types';
-import { getRequests, updateRequest, getUsers, getLogs, addUser, updateUser, deleteUser } from '../services/db';
-import { LogOut, Filter, CheckCircle, XCircle, Clock, AlertCircle, CalendarDays, Briefcase, FileWarning, Bell, X, LayoutDashboard, Users, Activity, MapPin, Search, ShieldAlert, UserPlus, Edit, Trash2, Save } from 'lucide-react';
+import { getRequests, updateRequest, getUsers, getLogs, addUser, updateUser, deleteUser, exportDatabase, importDatabase } from '../services/db';
+import { LogOut, Filter, CheckCircle, XCircle, Clock, AlertCircle, CalendarDays, Briefcase, FileWarning, Bell, X, LayoutDashboard, Users, Activity, MapPin, Search, ShieldAlert, UserPlus, Edit, Trash2, Save, Database, Download, Upload } from 'lucide-react';
 
 interface AdminScreenProps {
   currentUser: User;
@@ -33,6 +33,9 @@ export const AdminScreen: React.FC<AdminScreenProps> = ({ currentUser, onLogout,
   const [formPassword, setFormPassword] = useState('1234');
   const [formJobTitle, setFormJobTitle] = useState<JobTitle>('Operator');
   const [formRole, setFormRole] = useState<'EMPLOYEE' | 'ADMIN'>('EMPLOYEE');
+
+  // Database Management State
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
 
   // Notification & Security State
@@ -156,6 +159,34 @@ export const AdminScreen: React.FC<AdminScreenProps> = ({ currentUser, onLogout,
       loadData();
   };
 
+  // --- DATABASE HANDLERS ---
+  const handleBackup = () => {
+      exportDatabase();
+      setNotification("Database backup downloaded successfully.");
+      setTimeout(() => setNotification(null), 3000);
+  };
+
+  const handleRestoreClick = () => {
+      fileInputRef.current?.click();
+  };
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+
+      if (window.confirm("WARNING: Restoring will OVERWRITE all current data. Are you sure?")) {
+          const result = await importDatabase(file);
+          if (result.success) {
+              alert(result.message);
+              window.location.reload(); // Reload to reflect changes
+          } else {
+              alert(result.message);
+          }
+      }
+      // Reset input
+      if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
   // --- HELPERS ---
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -200,7 +231,7 @@ export const AdminScreen: React.FC<AdminScreenProps> = ({ currentUser, onLogout,
     return (
         <div className="space-y-6">
             {/* Stats Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex flex-col items-center justify-center hover:shadow-md transition">
                     <div className="bg-blue-100 p-3 rounded-full mb-2">
                         <Users className="w-6 h-6 text-blue-600" />
@@ -222,6 +253,31 @@ export const AdminScreen: React.FC<AdminScreenProps> = ({ currentUser, onLogout,
                     <span className="text-3xl font-bold text-gray-800 z-10">{pendingCount}</span>
                     <span className="text-xs uppercase font-bold text-gray-400 tracking-wider z-10">Pending Requests</span>
                     {pendingCount > 0 && <div className="absolute top-0 right-0 w-3 h-3 bg-red-500 rounded-full animate-ping"></div>}
+                </div>
+                {/* Database Management Card */}
+                 <div className="bg-slate-50 p-6 rounded-xl shadow-sm border border-slate-200 flex flex-col items-center justify-center hover:shadow-md transition gap-3">
+                     <div className="flex items-center gap-2 text-slate-700 font-bold text-sm mb-1">
+                        <Database className="w-4 h-4" /> Data Management
+                     </div>
+                    <button 
+                        onClick={handleBackup}
+                        className="w-full bg-white border border-slate-300 hover:bg-slate-100 text-slate-700 text-xs font-bold py-2 px-4 rounded-lg flex items-center justify-center gap-2 transition"
+                    >
+                        <Download className="w-3 h-3" /> Backup Data
+                    </button>
+                    <button 
+                        onClick={handleRestoreClick}
+                        className="w-full bg-slate-200 border border-slate-300 hover:bg-slate-300 text-slate-700 text-xs font-bold py-2 px-4 rounded-lg flex items-center justify-center gap-2 transition"
+                    >
+                        <Upload className="w-3 h-3" /> Restore Data
+                    </button>
+                    <input 
+                        type="file" 
+                        ref={fileInputRef} 
+                        onChange={handleFileChange} 
+                        className="hidden" 
+                        accept=".json"
+                    />
                 </div>
             </div>
 

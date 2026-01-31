@@ -121,3 +121,65 @@ export const markRequestsAsRead = (uid: string) => {
     localStorage.setItem(REQUESTS_KEY, JSON.stringify(updatedRequests));
   }
 };
+
+// --- BACKUP & RESTORE UTILS ---
+
+export const exportDatabase = () => {
+  const users = getUsers();
+  const logs = getLogs();
+  const requests = getRequests();
+  
+  const data = {
+    users,
+    logs,
+    requests,
+    version: 1,
+    exportedAt: new Date().toISOString()
+  };
+
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `geoportal_backup_${new Date().toISOString().split('T')[0]}.json`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+};
+
+export const importDatabase = (file: File): Promise<{success: boolean, message: string}> => {
+  return new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const result = e.target?.result as string;
+        const data = JSON.parse(result);
+        
+        // Basic validation
+        if (!data.users || !Array.isArray(data.users)) {
+          resolve({ success: false, message: "Invalid backup file: Missing users data." });
+          return;
+        }
+
+        // Restore
+        localStorage.setItem(MOCK_USERS_KEY, JSON.stringify(data.users));
+        
+        if (data.logs && Array.isArray(data.logs)) {
+          localStorage.setItem(ATTENDANCE_LOGS_KEY, JSON.stringify(data.logs));
+        }
+        
+        if (data.requests && Array.isArray(data.requests)) {
+          localStorage.setItem(REQUESTS_KEY, JSON.stringify(data.requests));
+        }
+
+        resolve({ success: true, message: "Database restored successfully! Page will reload." });
+      } catch (err) {
+        resolve({ success: false, message: "Error parsing backup file." });
+      }
+    };
+    reader.onerror = () => resolve({ success: false, message: "Error reading file." });
+    reader.readAsText(file);
+  });
+};
