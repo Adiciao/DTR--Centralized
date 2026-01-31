@@ -1,0 +1,8 @@
+{
+  "name": "Employee GeoPortal",
+  "description": "Secure employee attendance tracking with geolocation verification.",
+  "requestFramePermissions": [
+    "geolocation",
+    "camera"
+  ]
+}
