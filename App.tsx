@@ -108,9 +108,15 @@ const App: React.FC = () => {
     }
   };
 
+  const isAdminScreen = screen === ScreenState.ADMIN_DASHBOARD;
+
   return (
-    <div className="min-h-screen flex items-center justify-center p-4">
-      <div className="max-w-md w-full bg-white rounded-2xl shadow-xl overflow-hidden min-h-[500px] flex flex-col relative">
+    <div className={`min-h-screen flex items-center justify-center p-4 transition-colors duration-500 ${isAdminScreen ? 'bg-slate-200' : 'bg-gray-100'}`}>
+      <div className={`bg-white shadow-2xl overflow-hidden flex flex-col relative transition-all duration-500 ease-in-out
+        ${isAdminScreen 
+            ? 'w-full max-w-[1400px] h-[90vh] rounded-xl' // Desktop/Web Mode
+            : 'w-full max-w-md min-h-[600px] rounded-3xl' // Mobile App Mode
+        }`}>
          {renderScreen()}
       </div>
     </div>

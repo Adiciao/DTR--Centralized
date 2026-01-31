@@ -5,16 +5,30 @@ const REQUESTS_KEY = 'correction_requests';
 
 // Initialize mock data if not exists
 export const initDB = () => {
-  // For development/demo purposes, we want to ensure the new fields appear.
-  // In a real app we'd migrate. Here we can check if the first user has a jobTitle.
   const stored = localStorage.getItem(MOCK_USERS_KEY);
   let shouldReset = false;
+
   if (!stored) {
     shouldReset = true;
   } else {
-    const parsed = JSON.parse(stored);
-    if (parsed.length > 0 && !parsed[0].jobTitle) {
-      shouldReset = true; // Reset to get new fields
+    try {
+      const parsed: User[] = JSON.parse(stored);
+      // Reset if:
+      // 1. Data is not an array
+      // 2. Data is empty
+      // 3. Old data schema (missing jobTitle)
+      // 4. Critical ADMIN user is missing
+      if (
+        !Array.isArray(parsed) || 
+        parsed.length === 0 || 
+        (parsed.length > 0 && !parsed[0].jobTitle) ||
+        !parsed.find(u => u.role === 'ADMIN')
+      ) {
+        shouldReset = true;
+      }
+    } catch (e) {
+      // If JSON parse fails, reset
+      shouldReset = true;
     }
   }
 
@@ -26,6 +40,7 @@ export const initDB = () => {
       { id: 'ADMIN', name: 'Administrator', password: DEFAULT_PASSWORD, isDefaultPass: false, role: 'ADMIN', jobTitle: 'Administrator' }
     ];
     localStorage.setItem(MOCK_USERS_KEY, JSON.stringify(mockUsers));
+    console.log("Database initialized/reset with default users.");
   }
 };
 

@@ -17,7 +17,8 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
     setError('');
 
     const users = getUsers();
-    const user = users.find(u => u.id === id && u.password === password);
+    // Case-insensitive ID check
+    const user = users.find(u => u.id.toUpperCase() === id.trim().toUpperCase() && u.password === password);
 
     if (user) {
       onLoginSuccess(user);
