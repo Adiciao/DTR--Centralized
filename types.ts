@@ -1,3 +1,4 @@
+
 export type JobTitle = 'Programmer' | 'Technician' | 'Operator' | 'Administrator';
 
 export interface User {
@@ -7,6 +8,7 @@ export interface User {
   isDefaultPass: boolean;
   role?: 'EMPLOYEE' | 'ADMIN'; // System Role
   jobTitle?: JobTitle; // Job Position
+  leaveBalances?: Record<LeaveType, number>;
 }
 
 export type ClockType = 'IN' | 'OUT';
@@ -52,8 +54,48 @@ export interface UserRequest {
   jobTitle?: string; // Snapshot of job title at time of request
 }
 
-// Retain alias for backward compatibility if needed, though we will update usages
-export type CorrectionRequest = UserRequest; 
+export interface Message {
+  id: string;
+  fromId: string;
+  fromName: string;
+  toId: string; // 'ALL' or specific User ID
+  subject: string;
+  content: string;
+  timestamp: string;
+  isRead: boolean;
+}
+
+export interface Geofence {
+  id: string;
+  name: string;
+  lat: number;
+  lng: number;
+  radius: number; // in meters
+}
+
+export interface Shift {
+  id: string;
+  name: string;
+  startTime: string; // HH:mm
+  endTime: string; // HH:mm
+  gracePeriod: number; // minutes
+}
+
+export interface Holiday {
+  id: string;
+  name: string;
+  date: string; // YYYY-MM-DD
+  type: 'REGULAR' | 'SPECIAL';
+}
+
+export interface SystemSettings {
+  geofences: Geofence[];
+  shifts: Shift[];
+  holidays: Holiday[];
+  breakDuration: number; // in minutes
+  allowRemoteClockIn: boolean;
+  deviceRestrictionEnabled: boolean;
+}
 
 export enum ScreenState {
   LOGIN = 'LOGIN',

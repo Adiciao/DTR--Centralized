@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, FileText, Send, Clock, CalendarDays, AlertTriangle } from 'lucide-react';
+import { X, FileText, Send, Clock, AlertTriangle } from 'lucide-react';
 import { UserRequest, RequestCategory, LeaveType } from '../types';
 
 interface RequestModalProps {
@@ -52,7 +52,7 @@ export const RequestModal: React.FC<RequestModalProps> = ({ uid, userName, jobTi
         leaveType,
         startDate,
         endDate,
-        date: startDate // Main reference date
+        date: startDate
       };
     } else if (category === 'OT') {
       req = {
@@ -73,139 +73,133 @@ export const RequestModal: React.FC<RequestModalProps> = ({ uid, userName, jobTi
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
-      <div className="w-full max-w-md bg-white rounded-t-2xl sm:rounded-2xl shadow-xl overflow-hidden animate-slide-up sm:animate-fade-in flex flex-col max-h-[90vh]">
+    <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-md z-[100] flex items-end sm:items-center justify-center p-0 sm:p-4">
+      <div className="w-full max-w-md bg-white rounded-t-[32px] sm:rounded-[32px] shadow-2xl overflow-hidden animate-slide-up flex flex-col max-h-[92vh] border-t sm:border border-slate-200">
         
         {/* Header */}
-        <div className="p-4 border-b border-gray-100 flex justify-between items-center bg-gray-50 shrink-0">
-          <h3 className="font-bold text-gray-800 flex items-center gap-2">
-            <FileText className="w-5 h-5 text-blue-600" />
-            Submit Request
-          </h3>
-          <button onClick={onClose} className="p-1 hover:bg-gray-200 rounded-full transition">
-            <X className="w-5 h-5 text-gray-500" />
+        <div className="p-5 border-b border-slate-100 flex justify-between items-center bg-white shrink-0">
+          <div className="flex items-center gap-3">
+              <div className="bg-blue-50 p-2 rounded-xl"><FileText className="w-5 h-5 text-blue-600" /></div>
+              <h3 className="font-black text-slate-800 tracking-tight">Formal Request</h3>
+          </div>
+          <button onClick={onClose} className="p-2 hover:bg-slate-100 rounded-full transition active:scale-90">
+            <X className="w-6 h-6 text-slate-400" />
           </button>
         </div>
         
-        <div className="p-4 overflow-y-auto custom-scrollbar">
+        <div className="p-6 overflow-y-auto custom-scrollbar flex-1 min-h-0 bg-white">
             {/* Category Tabs */}
-            <div className="flex bg-gray-100 p-1 rounded-lg mb-6">
-                <button 
-                    onClick={() => setCategory('LEAVE')}
-                    className={`flex-1 py-2 text-xs font-bold rounded-md transition ${category === 'LEAVE' ? 'bg-white shadow text-blue-600' : 'text-gray-500'}`}
-                >
-                    LEAVE
-                </button>
-                <button 
-                    onClick={() => setCategory('OT')}
-                    className={`flex-1 py-2 text-xs font-bold rounded-md transition ${category === 'OT' ? 'bg-white shadow text-blue-600' : 'text-gray-500'}`}
-                >
-                    OVERTIME
-                </button>
-                <button 
-                    onClick={() => setCategory('CORRECTION')}
-                    className={`flex-1 py-2 text-xs font-bold rounded-md transition ${category === 'CORRECTION' ? 'bg-white shadow text-blue-600' : 'text-gray-500'}`}
-                >
-                    CORRECTION
-                </button>
+            <div className="flex bg-slate-100 p-1.5 rounded-2xl mb-6 shadow-inner">
+                {['LEAVE', 'OT', 'CORRECTION'].map((cat) => (
+                    <button 
+                        key={cat}
+                        type="button"
+                        onClick={() => setCategory(cat as any)}
+                        className={`flex-1 py-2.5 text-[10px] font-black rounded-xl transition-all tracking-widest ${category === cat ? 'bg-white shadow-md text-blue-600' : 'text-slate-500 hover:text-slate-600'}`}
+                    >
+                        {cat}
+                    </button>
+                ))}
             </div>
 
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={handleSubmit} className="space-y-5 pb-6">
                 
                 {/* --- LEAVE FORM --- */}
                 {category === 'LEAVE' && (
-                    <>
+                    <div className="space-y-4 animate-fade-in">
                         <div>
-                            <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Leave Type</label>
+                            <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">Type of Leave</label>
                             <select 
                                 value={leaveType}
                                 onChange={(e) => setLeaveType(e.target.value as LeaveType)}
-                                className="w-full p-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 outline-none text-sm bg-white"
+                                className="w-full p-4 rounded-2xl border border-slate-200 focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none text-sm font-bold bg-slate-50 appearance-none shadow-sm"
                             >
                                 <option value="SICK">Sick Leave (SL)</option>
                                 <option value="VACATION">Vacation Leave (VL)</option>
                                 <option value="MATERNITY">Maternity Leave</option>
                                 <option value="EMERGENCY">Emergency Leave</option>
-                                <option value="OTHER">Other</option>
+                                <option value="OTHER">Other Type</option>
                             </select>
                         </div>
-                        <div className="grid grid-cols-2 gap-3">
+                        <div className="grid grid-cols-2 gap-4">
                             <div>
-                                <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Start Date</label>
-                                <input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} className="w-full p-3 rounded-lg border border-gray-300 text-sm" required />
+                                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">Start</label>
+                                <input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} className="w-full p-4 rounded-2xl border border-slate-200 text-sm font-bold shadow-sm focus:ring-4 focus:ring-blue-500/10 outline-none" required />
                             </div>
                             <div>
-                                <label className="block text-xs font-bold text-gray-500 uppercase mb-1">End Date</label>
-                                <input type="date" value={endDate} onChange={e => setEndDate(e.target.value)} className="w-full p-3 rounded-lg border border-gray-300 text-sm" required />
+                                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">End</label>
+                                <input type="date" value={endDate} onChange={e => setEndDate(e.target.value)} className="w-full p-4 rounded-2xl border border-slate-200 text-sm font-bold shadow-sm focus:ring-4 focus:ring-blue-500/10 outline-none" required />
                             </div>
                         </div>
-                    </>
+                    </div>
                 )}
 
                 {/* --- OT FORM --- */}
                 {category === 'OT' && (
-                    <>
-                         <div className="bg-blue-50 p-3 rounded-lg text-xs text-blue-700 border border-blue-100 flex items-start gap-2">
+                    <div className="space-y-4 animate-fade-in">
+                         <div className="bg-emerald-50 p-4 rounded-2xl text-[11px] text-emerald-700 border border-emerald-100 flex items-start gap-3 font-medium">
                             <Clock className="w-4 h-4 shrink-0 mt-0.5" />
-                            Overtime must be requested before the shift begins or immediately after.
+                            Overtime requires pre-approval or immediate post-shift reporting.
                         </div>
-                        <div className="grid grid-cols-2 gap-3">
+                        <div className="grid grid-cols-2 gap-4">
                             <div>
-                                <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Date</label>
-                                <input type="date" value={otDate} onChange={e => setOtDate(e.target.value)} className="w-full p-3 rounded-lg border border-gray-300 text-sm" required />
+                                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">Service Date</label>
+                                <input type="date" value={otDate} onChange={e => setOtDate(e.target.value)} className="w-full p-4 rounded-2xl border border-slate-200 text-sm font-bold shadow-sm focus:ring-4 focus:ring-blue-500/10 outline-none" required />
                             </div>
                             <div>
-                                <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Hours</label>
-                                <input type="number" min="1" max="24" value={otHours} onChange={e => setOtHours(Number(e.target.value))} className="w-full p-3 rounded-lg border border-gray-300 text-sm" required />
+                                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">Total Hours</label>
+                                <input type="number" min="1" max="24" value={otHours} onChange={e => setOtHours(Number(e.target.value))} className="w-full p-4 rounded-2xl border border-slate-200 text-sm font-bold shadow-sm focus:ring-4 focus:ring-blue-500/10 outline-none" required />
                             </div>
                         </div>
-                    </>
+                    </div>
                 )}
 
                 {/* --- CORRECTION FORM --- */}
                 {category === 'CORRECTION' && (
-                    <>
-                        <div className="bg-yellow-50 p-3 rounded-lg text-xs text-yellow-700 border border-yellow-100 flex items-start gap-2">
+                    <div className="space-y-4 animate-fade-in">
+                        <div className="bg-amber-50 p-4 rounded-2xl text-[11px] text-amber-700 border border-amber-100 flex items-start gap-3 font-medium">
                             <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
-                            Correction requests are for missed punches or technical issues only.
+                            Only for system malfunctions or inadvertent missed punches.
                         </div>
                          <div>
-                            <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Issue</label>
-                            <select value={correctionType} onChange={(e) => setCorrectionType(e.target.value as any)} className="w-full p-3 rounded-lg border border-gray-300 text-sm bg-white">
-                                <option value="MISSED_IN">Forgot Clock IN</option>
-                                <option value="MISSED_OUT">Forgot Clock OUT</option>
+                            <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">Discrepancy Type</label>
+                            <select value={correctionType} onChange={(e) => setCorrectionType(e.target.value as any)} className="w-full p-4 rounded-2xl border border-slate-200 text-sm font-bold bg-slate-50 shadow-sm appearance-none outline-none">
+                                <option value="MISSED_IN">Missed Clock-IN</option>
+                                <option value="MISSED_OUT">Missed Clock-OUT</option>
                             </select>
                         </div>
-                        <div className="grid grid-cols-2 gap-3">
+                        <div className="grid grid-cols-2 gap-4">
                             <div>
-                                <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Date</label>
-                                <input type="date" value={correctionDate} onChange={e => setCorrectionDate(e.target.value)} className="w-full p-3 rounded-lg border border-gray-300 text-sm" required />
+                                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">Actual Date</label>
+                                <input type="date" value={correctionDate} onChange={e => setCorrectionDate(e.target.value)} className="w-full p-4 rounded-2xl border border-slate-200 text-sm font-bold shadow-sm outline-none" required />
                             </div>
                             <div>
-                                <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Time</label>
-                                <input type="time" value={correctionTime} onChange={e => setCorrectionTime(e.target.value)} className="w-full p-3 rounded-lg border border-gray-300 text-sm" required />
+                                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">Actual Time</label>
+                                <input type="time" value={correctionTime} onChange={e => setCorrectionTime(e.target.value)} className="w-full p-4 rounded-2xl border border-slate-200 text-sm font-bold shadow-sm outline-none" required />
                             </div>
                         </div>
-                    </>
+                    </div>
                 )}
 
-                <div>
-                    <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Reason / Notes</label>
+                <div className="space-y-1.5">
+                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Justification</label>
                     <textarea 
                         value={reason}
                         onChange={(e) => setReason(e.target.value)}
-                        className="w-full p-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 outline-none text-sm min-h-[100px]"
-                        placeholder="Please explain why..."
+                        className="w-full p-4 rounded-2xl border border-slate-200 focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none text-sm min-h-[120px] font-medium shadow-sm"
+                        placeholder="Provide details for administrative review..."
                         required
                     ></textarea>
                 </div>
 
-                <button 
-                    type="submit"
-                    className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg shadow-lg shadow-blue-200 transition-all flex items-center justify-center gap-2"
-                >
-                    <Send className="w-4 h-4" /> SUBMIT {category} REQUEST
-                </button>
+                <div className="sticky bottom-0 bg-white pt-2 border-t border-slate-50">
+                    <button 
+                        type="submit"
+                        className="w-full bg-blue-600 hover:bg-blue-700 text-white font-black py-4 rounded-[18px] shadow-[0_12px_24px_-8px_rgba(37,99,235,0.4)] transition-all active:scale-[0.98] flex items-center justify-center gap-2 uppercase text-xs tracking-[0.2em] mt-2"
+                    >
+                        <Send className="w-4 h-4" /> Finalize Submission
+                    </button>
+                </div>
             </form>
         </div>
       </div>
